@@ -4,6 +4,7 @@ import { PanelOptions, Buffer } from 'types';
 import { Map, View } from 'ol';
 import { XYZ, Vector as VectorSource } from 'ol/source';
 import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer';
+import Heatmap from 'ol/layer/Heatmap';
 import { fromLonLat, transform } from 'ol/proj';
 import { defaults, DragPan, MouseWheelZoom } from 'ol/interaction';
 import { platformModifierKeyOnly } from 'ol/events/condition';
@@ -24,12 +25,13 @@ export class MainPanel extends PureComponent<Props, State> {
   map: Map;
   randomTile: TileLayer;
   drawLayer: VectorLayer;
+  heatLayer: Heatmap;
   draw: Draw;
   snap: Snap;
   perDevice: { [key: string]: FeatureCollection<Point> } | null = null;
 
   componentDidMount() {
-    const { tile_url, zoom_level, center_lon, center_lat } = this.props.options;
+    const { tile_url, zoom_level, center_lon, center_lat, heat_radius, heat_blur, heat_opacity } = this.props.options;
 
     const carto = new TileLayer({
       source: new XYZ({
@@ -69,7 +71,7 @@ export class MainPanel extends PureComponent<Props, State> {
           }),
         });
       },
-      zIndex: 2,
+      zIndex: 3,
     });
 
     this.map = new Map({
@@ -124,20 +126,41 @@ export class MainPanel extends PureComponent<Props, State> {
 
     if (this.props.data.series.length > 0) {
       const { buffer } = this.props.data.series[0].fields[0].values as Buffer;
-      this.perDevice = processDataES(buffer);
+      // this.perDevice = processDataES(buffer);
+      const { perDevice, heatSource } = processDataES(buffer);
+      this.perDevice = perDevice;
+      this.heatLayer = new Heatmap({
+        source: heatSource,
+        blur: parseInt(heat_blur, 10),
+        radius: parseInt(heat_radius, 10),
+        opacity: parseFloat(heat_opacity),
+        zIndex: 2,
+      });
+      this.map.addLayer(this.heatLayer);
     }
   }
 
   componentDidUpdate(prevProps: Props) {
     if (prevProps.data.series[0] !== this.props.data.series[0]) {
       this.perDevice = null;
+      this.map.removeLayer(this.heatLayer);
       if (this.props.data.series.length == 0) {
         return;
       }
-
+      const { heat_blur, heat_radius, heat_opacity } = this.props.options;
       const { buffer } = this.props.data.series[0].fields[0].values as Buffer;
 
-      this.perDevice = processDataES(buffer);
+      const { perDevice, heatSource } = processDataES(buffer);
+      this.perDevice = perDevice;
+
+      this.heatLayer = new Heatmap({
+        source: heatSource,
+        blur: parseInt(heat_blur, 10),
+        radius: parseInt(heat_radius, 10),
+        opacity: parseFloat(heat_opacity),
+        zIndex: 2,
+      });
+      this.map.addLayer(this.heatLayer);
     }
 
     if (prevProps.options.tile_url !== this.props.options.tile_url) {

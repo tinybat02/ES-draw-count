@@ -90228,15 +90228,17 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var ol__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol */ "../node_modules/ol/index.js");
 /* harmony import */ var ol_source__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/source */ "../node_modules/ol/source.js");
 /* harmony import */ var ol_layer__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ol/layer */ "../node_modules/ol/layer.js");
-/* harmony import */ var ol_proj__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ol/proj */ "../node_modules/ol/proj.js");
-/* harmony import */ var ol_interaction__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ol/interaction */ "../node_modules/ol/interaction.js");
-/* harmony import */ var ol_events_condition__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ol/events/condition */ "../node_modules/ol/events/condition.js");
-/* harmony import */ var ol_style__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ol/style */ "../node_modules/ol/style.js");
-/* harmony import */ var ol_geom_GeometryType__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ol/geom/GeometryType */ "../node_modules/ol/geom/GeometryType.js");
-/* harmony import */ var nanoid__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! nanoid */ "../node_modules/nanoid/index.browser.js");
-/* harmony import */ var _utils_helper__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./utils/helper */ "./utils/helper.ts");
-/* harmony import */ var ol_ol_css__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ol/ol.css */ "../node_modules/ol/ol.css");
-/* harmony import */ var ol_ol_css__WEBPACK_IMPORTED_MODULE_12___default = /*#__PURE__*/__webpack_require__.n(ol_ol_css__WEBPACK_IMPORTED_MODULE_12__);
+/* harmony import */ var ol_layer_Heatmap__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ol/layer/Heatmap */ "../node_modules/ol/layer/Heatmap.js");
+/* harmony import */ var ol_proj__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ol/proj */ "../node_modules/ol/proj.js");
+/* harmony import */ var ol_interaction__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ol/interaction */ "../node_modules/ol/interaction.js");
+/* harmony import */ var ol_events_condition__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ol/events/condition */ "../node_modules/ol/events/condition.js");
+/* harmony import */ var ol_style__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ol/style */ "../node_modules/ol/style.js");
+/* harmony import */ var ol_geom_GeometryType__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ol/geom/GeometryType */ "../node_modules/ol/geom/GeometryType.js");
+/* harmony import */ var nanoid__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! nanoid */ "../node_modules/nanoid/index.browser.js");
+/* harmony import */ var _utils_helper__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./utils/helper */ "./utils/helper.ts");
+/* harmony import */ var ol_ol_css__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ol/ol.css */ "../node_modules/ol/ol.css");
+/* harmony import */ var ol_ol_css__WEBPACK_IMPORTED_MODULE_13___default = /*#__PURE__*/__webpack_require__.n(ol_ol_css__WEBPACK_IMPORTED_MODULE_13__);
+
 
 
 
@@ -90260,7 +90262,7 @@ function (_super) {
   function MainPanel() {
     var _this = _super !== null && _super.apply(this, arguments) || this;
 
-    _this.id = 'id' + Object(nanoid__WEBPACK_IMPORTED_MODULE_10__["nanoid"])();
+    _this.id = 'id' + Object(nanoid__WEBPACK_IMPORTED_MODULE_11__["nanoid"])();
     _this.perDevice = null;
 
     _this.clearDrawLayer = function () {
@@ -90281,7 +90283,10 @@ function (_super) {
         tile_url = _a.tile_url,
         zoom_level = _a.zoom_level,
         center_lon = _a.center_lon,
-        center_lat = _a.center_lat;
+        center_lat = _a.center_lat,
+        heat_radius = _a.heat_radius,
+        heat_blur = _a.heat_blur,
+        heat_opacity = _a.heat_opacity;
     var carto = new ol_layer__WEBPACK_IMPORTED_MODULE_4__["Tile"]({
       source: new ol_source__WEBPACK_IMPORTED_MODULE_3__["XYZ"]({
         url: 'https://{1-4}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
@@ -90293,22 +90298,22 @@ function (_super) {
       style: function style(feature) {
         var textLabel = feature.get('id') || feature.get('name');
         var offsetY = feature.getGeometry().getType() === 'Point' ? -12 : 0;
-        return new ol_style__WEBPACK_IMPORTED_MODULE_8__["Style"]({
-          fill: new ol_style__WEBPACK_IMPORTED_MODULE_8__["Fill"]({
+        return new ol_style__WEBPACK_IMPORTED_MODULE_9__["Style"]({
+          fill: new ol_style__WEBPACK_IMPORTED_MODULE_9__["Fill"]({
             color: 'rgba(255, 255, 255, 0.2)'
           }),
-          stroke: new ol_style__WEBPACK_IMPORTED_MODULE_8__["Stroke"]({
+          stroke: new ol_style__WEBPACK_IMPORTED_MODULE_9__["Stroke"]({
             color: '#49A8DE',
             width: 2
           }),
-          image: new ol_style__WEBPACK_IMPORTED_MODULE_8__["Circle"]({
+          image: new ol_style__WEBPACK_IMPORTED_MODULE_9__["Circle"]({
             radius: 7,
-            fill: new ol_style__WEBPACK_IMPORTED_MODULE_8__["Fill"]({
+            fill: new ol_style__WEBPACK_IMPORTED_MODULE_9__["Fill"]({
               color: '#49A8DE'
             })
           }),
-          text: new ol_style__WEBPACK_IMPORTED_MODULE_8__["Text"]({
-            stroke: new ol_style__WEBPACK_IMPORTED_MODULE_8__["Stroke"]({
+          text: new ol_style__WEBPACK_IMPORTED_MODULE_9__["Text"]({
+            stroke: new ol_style__WEBPACK_IMPORTED_MODULE_9__["Stroke"]({
               color: '#fff',
               width: 2
             }),
@@ -90318,23 +90323,23 @@ function (_super) {
           })
         });
       },
-      zIndex: 2
+      zIndex: 3
     });
     this.map = new ol__WEBPACK_IMPORTED_MODULE_2__["Map"]({
-      interactions: Object(ol_interaction__WEBPACK_IMPORTED_MODULE_6__["defaults"])({
+      interactions: Object(ol_interaction__WEBPACK_IMPORTED_MODULE_7__["defaults"])({
         dragPan: false,
         mouseWheelZoom: false,
         onFocusOnly: true
-      }).extend([new ol_interaction__WEBPACK_IMPORTED_MODULE_6__["DragPan"]({
+      }).extend([new ol_interaction__WEBPACK_IMPORTED_MODULE_7__["DragPan"]({
         condition: function condition(event) {
-          return Object(ol_events_condition__WEBPACK_IMPORTED_MODULE_7__["platformModifierKeyOnly"])(event) || this.getPointerCount() === 2;
+          return Object(ol_events_condition__WEBPACK_IMPORTED_MODULE_8__["platformModifierKeyOnly"])(event) || this.getPointerCount() === 2;
         }
-      }), new ol_interaction__WEBPACK_IMPORTED_MODULE_6__["MouseWheelZoom"]({
-        condition: ol_events_condition__WEBPACK_IMPORTED_MODULE_7__["platformModifierKeyOnly"]
+      }), new ol_interaction__WEBPACK_IMPORTED_MODULE_7__["MouseWheelZoom"]({
+        condition: ol_events_condition__WEBPACK_IMPORTED_MODULE_8__["platformModifierKeyOnly"]
       })]),
       layers: [carto, this.drawLayer],
       view: new ol__WEBPACK_IMPORTED_MODULE_2__["View"]({
-        center: Object(ol_proj__WEBPACK_IMPORTED_MODULE_5__["fromLonLat"])([center_lon, center_lat]),
+        center: Object(ol_proj__WEBPACK_IMPORTED_MODULE_6__["fromLonLat"])([center_lon, center_lat]),
         zoom: zoom_level
       }),
       target: this.id
@@ -90350,49 +90355,75 @@ function (_super) {
       this.map.addLayer(this.randomTile);
     }
 
-    this.draw = new ol_interaction__WEBPACK_IMPORTED_MODULE_6__["Draw"]({
+    this.draw = new ol_interaction__WEBPACK_IMPORTED_MODULE_7__["Draw"]({
       source: source,
-      type: ol_geom_GeometryType__WEBPACK_IMPORTED_MODULE_9__["default"].POLYGON
+      type: ol_geom_GeometryType__WEBPACK_IMPORTED_MODULE_10__["default"].POLYGON
     });
     this.map.addInteraction(this.draw);
-    this.snap = new ol_interaction__WEBPACK_IMPORTED_MODULE_6__["Snap"]({
+    this.snap = new ol_interaction__WEBPACK_IMPORTED_MODULE_7__["Snap"]({
       source: source
     });
     this.map.addInteraction(this.snap);
     this.drawLayer.getSource().on('addfeature', function (ft) {
       //@ts-ignore
-      var coordinates = ft.feature.getGeometry().getCoordinates(); // const a = coordinates.map(coord => {
-      //   console.log('item ', coord);
-      //   return toLonLat(coord);
-      // });
-      // console.log('transfrom ', a);
+      var coordinates = ft.feature.getGeometry().getCoordinates();
 
       if (_this.perDevice) {
         var converted = coordinates[0].map(function (elm) {
-          return Object(ol_proj__WEBPACK_IMPORTED_MODULE_5__["transform"])(elm, 'EPSG:3857', 'EPSG:4326');
+          return Object(ol_proj__WEBPACK_IMPORTED_MODULE_6__["transform"])(elm, 'EPSG:3857', 'EPSG:4326');
         });
-        var count = Object(_utils_helper__WEBPACK_IMPORTED_MODULE_11__["countUnique"])(converted, _this.perDevice);
-        console.log('counting after added ', count);
+        var count = Object(_utils_helper__WEBPACK_IMPORTED_MODULE_12__["countUnique"])(converted, _this.perDevice);
         ft.feature.set('name', count.toString());
       }
     });
 
     if (this.props.data.series.length > 0) {
-      var buffer = this.props.data.series[0].fields[0].values.buffer;
-      this.perDevice = Object(_utils_helper__WEBPACK_IMPORTED_MODULE_11__["processDataES"])(buffer);
+      var buffer = this.props.data.series[0].fields[0].values.buffer; // this.perDevice = processDataES(buffer);
+
+      var _b = Object(_utils_helper__WEBPACK_IMPORTED_MODULE_12__["processDataES"])(buffer),
+          perDevice = _b.perDevice,
+          heatSource = _b.heatSource;
+
+      this.perDevice = perDevice;
+      this.heatLayer = new ol_layer_Heatmap__WEBPACK_IMPORTED_MODULE_5__["default"]({
+        source: heatSource,
+        blur: parseInt(heat_blur, 10),
+        radius: parseInt(heat_radius, 10),
+        opacity: parseFloat(heat_opacity),
+        zIndex: 2
+      });
+      this.map.addLayer(this.heatLayer);
     }
   };
 
   MainPanel.prototype.componentDidUpdate = function (prevProps) {
     if (prevProps.data.series[0] !== this.props.data.series[0]) {
       this.perDevice = null;
+      this.map.removeLayer(this.heatLayer);
 
       if (this.props.data.series.length == 0) {
         return;
       }
 
+      var _a = this.props.options,
+          heat_blur = _a.heat_blur,
+          heat_radius = _a.heat_radius,
+          heat_opacity = _a.heat_opacity;
       var buffer = this.props.data.series[0].fields[0].values.buffer;
-      this.perDevice = Object(_utils_helper__WEBPACK_IMPORTED_MODULE_11__["processDataES"])(buffer);
+
+      var _b = Object(_utils_helper__WEBPACK_IMPORTED_MODULE_12__["processDataES"])(buffer),
+          perDevice = _b.perDevice,
+          heatSource = _b.heatSource;
+
+      this.perDevice = perDevice;
+      this.heatLayer = new ol_layer_Heatmap__WEBPACK_IMPORTED_MODULE_5__["default"]({
+        source: heatSource,
+        blur: parseInt(heat_blur, 10),
+        radius: parseInt(heat_radius, 10),
+        opacity: parseFloat(heat_opacity),
+        zIndex: 2
+      });
+      this.map.addLayer(this.heatLayer);
     }
 
     if (prevProps.options.tile_url !== this.props.options.tile_url) {
@@ -90417,7 +90448,7 @@ function (_super) {
 
     if (prevProps.options.center_lat !== this.props.options.center_lat || prevProps.options.center_lon !== this.props.options.center_lon) {
       this.map.getView().animate({
-        center: Object(ol_proj__WEBPACK_IMPORTED_MODULE_5__["fromLonLat"])([this.props.options.center_lon, this.props.options.center_lat]),
+        center: Object(ol_proj__WEBPACK_IMPORTED_MODULE_6__["fromLonLat"])([this.props.options.center_lon, this.props.options.center_lat]),
         duration: 2000
       });
     }
@@ -90493,7 +90524,10 @@ var defaults = {
   center_lat: 48.262725,
   center_lon: 11.66725,
   tile_url: '',
-  zoom_level: 18
+  zoom_level: 18,
+  heat_blur: '15',
+  heat_radius: '5',
+  heat_opacity: '0.9'
 };
 
 /***/ }),
@@ -90512,26 +90546,39 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _turf_helpers__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @turf/helpers */ "../node_modules/@turf/helpers/index.js");
 /* harmony import */ var _turf_helpers__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_turf_helpers__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _turf_points_within_polygon__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @turf/points-within-polygon */ "../node_modules/@turf/points-within-polygon/main.es.js");
+/* harmony import */ var ol_Feature__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/Feature */ "../node_modules/ol/Feature.js");
+/* harmony import */ var ol_geom_Point__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/geom/Point */ "../node_modules/ol/geom/Point.js");
+/* harmony import */ var ol_source_Vector__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ol/source/Vector */ "../node_modules/ol/source/Vector.js");
+
+
+
 
 
 var processDataES = function processDataES(data) {
   data.reverse();
   var perDeviceCoord = {};
+  var heatPoints = [];
   data.map(function (elm) {
     (perDeviceCoord[elm.hash_id] = perDeviceCoord[elm.hash_id] || []).push([elm.longitude, elm.latitude]);
+    heatPoints.push(new ol_Feature__WEBPACK_IMPORTED_MODULE_2__["default"](new ol_geom_Point__WEBPACK_IMPORTED_MODULE_3__["default"]([elm.longitude, elm.latitude]).transform('EPSG:4326', 'EPSG:3857')));
   });
   var perDevice = {};
   Object.keys(perDeviceCoord).map(function (hash) {
     perDevice[hash] = Object(_turf_helpers__WEBPACK_IMPORTED_MODULE_0__["points"])(perDeviceCoord[hash]);
   });
-  return perDevice;
+  return {
+    perDevice: perDevice,
+    heatSource: new ol_source_Vector__WEBPACK_IMPORTED_MODULE_4__["default"]({
+      features: heatPoints
+    })
+  };
 };
 var countUnique = function countUnique(coord, perDevice) {
   var count = 0;
   var polygonGeoJSON = Object(_turf_helpers__WEBPACK_IMPORTED_MODULE_0__["polygon"])([coord]);
   Object.keys(perDevice).map(function (hash) {
     var ptsWithin = Object(_turf_points_within_polygon__WEBPACK_IMPORTED_MODULE_1__["default"])(perDevice[hash], polygonGeoJSON);
-    if (ptsWithin.features.length > 0) count++;
+    if (ptsWithin.features.length > 1) count++;
   });
   return count;
 };
