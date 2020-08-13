@@ -90319,7 +90319,8 @@ function (_super) {
             }),
             font: '14px Calibri,sans-serif',
             text: textLabel,
-            offsetY: offsetY
+            offsetY: offsetY,
+            overflow: true
           })
         });
       },
@@ -90373,7 +90374,7 @@ function (_super) {
           return Object(ol_proj__WEBPACK_IMPORTED_MODULE_6__["transform"])(elm, 'EPSG:3857', 'EPSG:4326');
         });
         var count = Object(_utils_helper__WEBPACK_IMPORTED_MODULE_12__["countUnique"])(converted, _this.perDevice);
-        ft.feature.set('name', count.toString());
+        ft.feature.set('name', count);
       }
     });
 
@@ -90574,13 +90575,15 @@ var processDataES = function processDataES(data) {
   };
 };
 var countUnique = function countUnique(coord, perDevice) {
-  var count = 0;
+  var count1 = 0;
+  var count2 = 0;
   var polygonGeoJSON = Object(_turf_helpers__WEBPACK_IMPORTED_MODULE_0__["polygon"])([coord]);
   Object.keys(perDevice).map(function (hash) {
     var ptsWithin = Object(_turf_points_within_polygon__WEBPACK_IMPORTED_MODULE_1__["default"])(perDevice[hash], polygonGeoJSON);
-    if (ptsWithin.features.length > 1) count++;
+    if (ptsWithin.features.length == 1) count1++;
+    if (ptsWithin.features.length > 1) count2++;
   });
-  return count;
+  return count1 + "/" + count2;
 };
 
 /***/ }),

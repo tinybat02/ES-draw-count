@@ -35,11 +35,13 @@ export const processDataES = (data: Item[]) => {
 };
 
 export const countUnique = (coord: [number, number][], perDevice: { [key: string]: FeatureCollection<Point> }) => {
-  let count = 0;
+  let count1 = 0;
+  let count2 = 0;
   const polygonGeoJSON = polygon([coord]);
   Object.keys(perDevice).map(hash => {
     const ptsWithin = pointsWithinPolygon(perDevice[hash], polygonGeoJSON);
-    if (ptsWithin.features.length > 1) count++;
+    if (ptsWithin.features.length == 1) count1++;
+    if (ptsWithin.features.length > 1) count2++;
   });
-  return count;
+  return `${count1}/${count2}`;
 };

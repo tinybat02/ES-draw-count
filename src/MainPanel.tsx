@@ -68,6 +68,7 @@ export class MainPanel extends PureComponent<Props, State> {
             font: '14px Calibri,sans-serif',
             text: textLabel,
             offsetY: offsetY,
+            overflow: true,
           }),
         });
       },
@@ -120,7 +121,7 @@ export class MainPanel extends PureComponent<Props, State> {
           return transform(elm, 'EPSG:3857', 'EPSG:4326');
         });
         const count = countUnique(converted as [number, number][], this.perDevice);
-        ft.feature.set('name', count.toString());
+        ft.feature.set('name', count);
       }
     });
 
