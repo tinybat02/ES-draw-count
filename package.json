@@ -1,0 +1,25 @@
+{
+  "name": "es-draw-polygon-count",
+  "version": "1.0.0",
+  "description": "ES Draw Polygon Count",
+  "scripts": {
+    "build": "grafana-toolkit plugin:build",
+    "test": "grafana-toolkit plugin:test",
+    "dev": "grafana-toolkit plugin:dev",
+    "watch": "grafana-toolkit plugin:dev --watch"
+  },
+  "author": "Nam Le",
+  "license": "MIT",
+  "devDependencies": {
+    "@grafana/data": "next",
+    "@grafana/toolkit": "next",
+    "@grafana/ui": "next",
+    "@types/ol": "^6.3.1"
+  },
+  "dependencies": {
+    "@turf/helpers": "^6.1.4",
+    "@turf/points-within-polygon": "^5.1.5",
+    "nanoid": "^3.1.12",
+    "ol": "^6.4.3"
+  }
+}

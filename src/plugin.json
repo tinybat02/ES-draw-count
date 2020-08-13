@@ -1,0 +1,21 @@
+{
+  "type": "panel",
+  "name": "ES Draw Count",
+  "id": "id-es-draw-polygon-count",
+  "dataFormats": ["table"],
+  "info": {
+    "description": "Draw Polygon to Count",
+    "author": {
+      "name": "Nam Le"
+    },
+    "keywords": [],
+    "screenshots": [],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+
+  "dependencies": {
+    "grafanaVersion": "6.3.x",
+    "plugins": []
+  }
+}
