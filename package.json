@@ -19,6 +19,7 @@
   "dependencies": {
     "@turf/helpers": "^6.1.4",
     "@turf/points-within-polygon": "^5.1.5",
+    "js-client-file-downloader": "^1.0.7",
     "nanoid": "^3.1.12",
     "ol": "^6.4.3"
   }

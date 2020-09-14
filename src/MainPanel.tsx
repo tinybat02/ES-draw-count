@@ -8,13 +8,17 @@ import Heatmap from 'ol/layer/Heatmap';
 import { fromLonLat, transform } from 'ol/proj';
 import { defaults, DragPan, MouseWheelZoom } from 'ol/interaction';
 import { platformModifierKeyOnly } from 'ol/events/condition';
-import { FeatureLike } from 'ol/Feature';
+import Feature, { FeatureLike } from 'ol/Feature';
 import { Fill, Stroke, Style, Circle as CircleStyle, Text } from 'ol/style';
 import { Draw, Snap } from 'ol/interaction';
 import GeometryType from 'ol/geom/GeometryType';
 import { nanoid } from 'nanoid';
-import { processDataES, countUnique } from './utils/helper';
+import { processDataES, countUnique, convertGeoJSON } from './utils/helper';
 import { FeatureCollection, Point } from '@turf/helpers';
+import Polygon from 'ol/geom/Polygon';
+import Icon from './img/save_icon.svg';
+import { jsFileDownloader } from 'js-client-file-downloader';
+import './style/main.css';
 import 'ol/ol.css';
 
 interface Props extends PanelProps<PanelOptions> {}
@@ -39,7 +43,7 @@ export class MainPanel extends PureComponent<Props, State> {
       }),
     });
 
-    const source = new VectorSource();
+    const source = new VectorSource<Polygon>();
 
     this.drawLayer = new VectorLayer({
       source: source,
@@ -127,7 +131,6 @@ export class MainPanel extends PureComponent<Props, State> {
 
     if (this.props.data.series.length > 0) {
       const { buffer } = this.props.data.series[0].fields[0].values as Buffer;
-      // this.perDevice = processDataES(buffer);
       const { perDevice, heatSource } = processDataES(buffer);
       this.perDevice = perDevice;
       this.heatLayer = new Heatmap({
@@ -162,6 +165,20 @@ export class MainPanel extends PureComponent<Props, State> {
         zIndex: 2,
       });
       this.map.addLayer(this.heatLayer);
+
+      if (this.drawLayer) {
+        const features = this.drawLayer.getSource().getFeatures() as Feature<Polygon>[];
+        features.forEach(feature => {
+          const coordinates = feature.getGeometry().getCoordinates() as [number, number][][];
+          const converted = coordinates[0].map(elm => {
+            return transform(elm, 'EPSG:3857', 'EPSG:4326');
+          });
+          if (this.perDevice) {
+            const count = countUnique(converted as [number, number][], this.perDevice);
+            feature.set('name', count);
+          }
+        });
+      }
     }
 
     if (prevProps.options.tile_url !== this.props.options.tile_url) {
@@ -201,6 +218,13 @@ export class MainPanel extends PureComponent<Props, State> {
     });
   };
 
+  onDownload = () => {
+    if (this.drawLayer) {
+      const obj = convertGeoJSON(this.drawLayer.getSource().getFeatures());
+      jsFileDownloader.makeJSON(obj, 'geojson');
+    }
+  };
+
   render() {
     const { width, height } = this.props;
 
@@ -210,6 +234,7 @@ export class MainPanel extends PureComponent<Props, State> {
           <button className="btn btn-primary" onClick={this.clearDrawLayer}>
             Clear Draw
           </button>
+          <img src={Icon} className="icon-download" onClick={this.onDownload} />
         </div>
         <div id={this.id} style={{ width, height: height - 40 }}></div>
       </div>

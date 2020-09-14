@@ -3,6 +3,7 @@ import pointsWithinPolygon from '@turf/points-within-polygon';
 import Feature from 'ol/Feature';
 import OlPoint from 'ol/geom/Point';
 import VectorSource from 'ol/source/Vector';
+import GeoJSON from 'ol/format/GeoJSON';
 
 interface Item {
   latitude: number;
@@ -44,4 +45,9 @@ export const countUnique = (coord: [number, number][], perDevice: { [key: string
     if (ptsWithin.features.length > 1) count2++;
   });
   return `${count1}/${count2}`;
+};
+
+export const convertGeoJSON = (features: Feature[]) => {
+  const format = new GeoJSON({ featureProjection: 'EPSG:3857' });
+  return format.writeFeaturesObject(features);
 };

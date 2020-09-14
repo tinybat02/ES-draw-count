@@ -1,0 +1,8 @@
+.icon-download {
+  cursor: pointer;
+  margin-left: 1em;
+}
+
+.icon-download:active {
+  transform: translateY(4px);
+}
