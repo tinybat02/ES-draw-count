@@ -6,10 +6,11 @@ import { XYZ, Vector as VectorSource } from 'ol/source';
 import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer';
 import Heatmap from 'ol/layer/Heatmap';
 import { fromLonLat, transform } from 'ol/proj';
-import { defaults, DragPan, MouseWheelZoom } from 'ol/interaction';
-import { platformModifierKeyOnly } from 'ol/events/condition';
+import { defaults, DragPan, MouseWheelZoom, Select } from 'ol/interaction';
+import { SelectEvent } from 'ol/interaction/Select';
+import { platformModifierKeyOnly, click } from 'ol/events/condition';
 import Feature, { FeatureLike } from 'ol/Feature';
-import { Fill, Stroke, Style, Circle as CircleStyle, Text } from 'ol/style';
+import { Fill, Stroke, Style, Text } from 'ol/style';
 import { Draw, Snap } from 'ol/interaction';
 import GeometryType from 'ol/geom/GeometryType';
 import { nanoid } from 'nanoid';
@@ -22,7 +23,11 @@ import './style/main.css';
 import 'ol/ol.css';
 
 interface Props extends PanelProps<PanelOptions> {}
-interface State {}
+interface State {
+  isDrawing: boolean;
+  featureName: string;
+  selectedFeature: Feature | null;
+}
 
 export class MainPanel extends PureComponent<Props, State> {
   id = 'id' + nanoid();
@@ -32,7 +37,14 @@ export class MainPanel extends PureComponent<Props, State> {
   heatLayer: Heatmap;
   draw: Draw;
   snap: Snap;
+  select: Select;
   perDevice: { [key: string]: FeatureCollection<Point> } | null = null;
+
+  state: State = {
+    isDrawing: true,
+    featureName: '',
+    selectedFeature: null,
+  };
 
   componentDidMount() {
     const { tile_url, zoom_level, center_lon, center_lat, heat_radius, heat_blur, heat_opacity } = this.props.options;
@@ -48,21 +60,15 @@ export class MainPanel extends PureComponent<Props, State> {
     this.drawLayer = new VectorLayer({
       source: source,
       style: function(feature: FeatureLike) {
-        const textLabel = feature.get('id') || feature.get('name');
-        const offsetY = feature.getGeometry().getType() === 'Point' ? -12 : 0;
+        const textLabel = feature.get('label');
+        const textName = feature.get('name');
         return new Style({
           fill: new Fill({
             color: 'rgba(255, 255, 255, 0.2)',
           }),
           stroke: new Stroke({
-            color: '#49A8DE',
+            color: textName ? '#FFA500' : '#49A8DE',
             width: 2,
-          }),
-          image: new CircleStyle({
-            radius: 7,
-            fill: new Fill({
-              color: '#49A8DE',
-            }),
           }),
           text: new Text({
             stroke: new Stroke({
@@ -71,7 +77,6 @@ export class MainPanel extends PureComponent<Props, State> {
             }),
             font: '14px Calibri,sans-serif',
             text: textLabel,
-            offsetY: offsetY,
             overflow: true,
           }),
         });
@@ -125,9 +130,22 @@ export class MainPanel extends PureComponent<Props, State> {
           return transform(elm, 'EPSG:3857', 'EPSG:4326');
         });
         const count = countUnique(converted as [number, number][], this.perDevice);
-        ft.feature.set('name', count);
+        ft.feature.set('label', count);
       }
     });
+
+    this.select = new Select({ condition: click });
+    this.map.addInteraction(this.select);
+    this.select.on('select', (e: SelectEvent) => {
+      const selectedFeature = e.target.getFeatures().item(0);
+      if (selectedFeature) {
+        const name = selectedFeature.get('name') || '';
+        this.setState({ selectedFeature: selectedFeature, featureName: name });
+      } else {
+        this.setState({ selectedFeature: null, featureName: '' });
+      }
+    });
+    this.select.setActive(false);
 
     if (this.props.data.series.length > 0) {
       const { buffer } = this.props.data.series[0].fields[0].values as Buffer;
@@ -175,7 +193,7 @@ export class MainPanel extends PureComponent<Props, State> {
           });
           if (this.perDevice) {
             const count = countUnique(converted as [number, number][], this.perDevice);
-            feature.set('name', count);
+            feature.set('label', count);
           }
         });
       }
@@ -218,6 +236,49 @@ export class MainPanel extends PureComponent<Props, State> {
     });
   };
 
+  handleUndo = () => {
+    const lastFeature = this.drawLayer
+      .getSource()
+      .getFeatures()
+      .pop();
+    lastFeature && this.drawLayer.getSource().removeFeature(lastFeature);
+  };
+
+  onSelectMode = () => {
+    if (this.state.isDrawing) {
+      this.setState({ isDrawing: false });
+      this.draw.setActive(false);
+      this.snap.setActive(false);
+      this.select.setActive(true);
+    } else {
+      this.setState({ isDrawing: true });
+      this.draw.setActive(true);
+      this.snap.setActive(true);
+      this.select.setActive(false);
+    }
+  };
+
+  onInputName = (evt: React.ChangeEvent<HTMLInputElement>) => {
+    if (this.state.selectedFeature) this.setState({ featureName: evt.target.value });
+  };
+
+  onSetName = (evt: React.FormEvent<HTMLFormElement>) => {
+    evt.preventDefault();
+    const { selectedFeature, featureName } = this.state;
+
+    if (selectedFeature) {
+      selectedFeature.set('name', featureName);
+      selectedFeature.setStyle(
+        new Style({
+          stroke: new Stroke({
+            color: '#FFA500',
+            width: 2,
+          }),
+        })
+      );
+    }
+  };
+
   onDownload = () => {
     if (this.drawLayer) {
       const obj = convertGeoJSON(this.drawLayer.getSource().getFeatures());
@@ -227,14 +288,39 @@ export class MainPanel extends PureComponent<Props, State> {
 
   render() {
     const { width, height } = this.props;
+    const { featureName, isDrawing } = this.state;
 
     return (
       <div style={{ width, height }}>
-        <div style={{ padding: 5 }}>
-          <button className="btn btn-primary" onClick={this.clearDrawLayer}>
-            Clear Draw
-          </button>
-          <img src={Icon} className="icon-download" onClick={this.onDownload} />
+        <div style={{ display: 'flex', padding: 5 }}>
+          <div className="gf-form-switch" style={{ border: 'none' }} onClick={this.onSelectMode}>
+            <input type="checkbox" checked={!isDrawing} />
+            <span className="gf-form-switch__slider"></span>
+          </div>
+
+          {isDrawing && (
+            <>
+              <button className="btn btn-primary" style={{ marginLeft: '0.5em' }} onClick={this.clearDrawLayer}>
+                Clear Draw
+              </button>
+              <button className="btn btn-primary" style={{ marginLeft: '0.5em' }} onClick={this.handleUndo}>
+                Undo
+              </button>
+            </>
+          )}
+
+          {!isDrawing && (
+            <>
+              <form onSubmit={this.onSetName} style={{ marginLeft: '0.5em' }}>
+                <input
+                  value={featureName}
+                  onChange={this.onInputName}
+                  style={{ padding: 5, border: '1px solid #7f7f7f', borderRadius: 4 }}
+                />
+              </form>
+              <img src={Icon} className="icon-download" onClick={this.onDownload} />
+            </>
+          )}
         </div>
         <div id={this.id} style={{ width, height: height - 40 }}></div>
       </div>
