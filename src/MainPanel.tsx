@@ -226,9 +226,7 @@ export class MainPanel extends PureComponent<Props, State> {
         const features = this.drawLayer.getSource().getFeatures() as Feature<Polygon>[];
         features.forEach(feature => {
           const coordinates = feature.getGeometry().getCoordinates() as [number, number][][];
-          const converted = coordinates[0].map(elm => {
-            return transform(elm, 'EPSG:3857', 'EPSG:4326');
-          });
+          const converted = coordinates[0].map(elm => transform(elm, 'EPSG:3857', 'EPSG:4326'));
           if (this.perDevice) {
             const count = countUnique(converted as [number, number][], this.perDevice);
             feature.set('label', count);
