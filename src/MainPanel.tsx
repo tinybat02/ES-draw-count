@@ -160,6 +160,12 @@ export class MainPanel extends PureComponent<Props, State> {
       });
       this.map.addLayer(this.heatLayer);
     }
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && this.draw.getActive()) {
+        this.draw.abortDrawing();
+      }
+    });
   }
 
   componentDidUpdate(prevProps: Props) {
