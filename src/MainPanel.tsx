@@ -7,16 +7,17 @@ import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer';
 import Heatmap from 'ol/layer/Heatmap';
 import { fromLonLat, transform } from 'ol/proj';
 import { defaults, DragPan, MouseWheelZoom, Select } from 'ol/interaction';
-import { SelectEvent } from 'ol/interaction/Select';
 import { platformModifierKeyOnly, click } from 'ol/events/condition';
 import Feature, { FeatureLike } from 'ol/Feature';
 import { Fill, Stroke, Style, Text } from 'ol/style';
-import { Draw, Snap } from 'ol/interaction';
+import { Draw, Modify, Snap } from 'ol/interaction';
 import GeometryType from 'ol/geom/GeometryType';
 import { nanoid } from 'nanoid';
 import { processDataES, countUnique, convertGeoJSON } from './utils/helper';
 import { FeatureCollection, Point } from '@turf/helpers';
 import Polygon from 'ol/geom/Polygon';
+import { unByKey } from 'ol/Observable';
+import { EventsKey } from 'ol/events';
 import Icon from './img/save_icon.svg';
 import { jsFileDownloader } from 'js-client-file-downloader';
 import './style/main.css';
@@ -36,6 +37,7 @@ export class MainPanel extends PureComponent<Props, State> {
   drawLayer: VectorLayer;
   heatLayer: Heatmap;
   draw: Draw;
+  modify: Modify;
   snap: Snap;
   select: Select;
   perDevice: { [key: string]: FeatureCollection<Point> } | null = null;
@@ -113,22 +115,52 @@ export class MainPanel extends PureComponent<Props, State> {
       this.map.addLayer(this.randomTile);
     }
 
+    let modifiedFeatures: Feature[] = [];
+    let geometryChangeListener: EventsKey | null;
+
+    this.modify = new Modify({ source: source });
+    this.map.addInteraction(this.modify);
+
+    this.modify.on('modifystart', e => {
+      modifiedFeatures.length = 0;
+      e.features.forEach(feature => {
+        geometryChangeListener = feature.getGeometry().on('change', () => {
+          if (modifiedFeatures.indexOf(feature) == -1) {
+            modifiedFeatures.push(feature);
+          }
+        });
+      });
+    });
+
+    this.modify.on('modifyend', () => {
+      if (geometryChangeListener) {
+        unByKey(geometryChangeListener);
+        geometryChangeListener = null;
+      }
+
+      const ft = modifiedFeatures[0].getGeometry() as Polygon;
+
+      if (this.perDevice) {
+        const converted = ft.getCoordinates()[0].map(elm => transform(elm, 'EPSG:3857', 'EPSG:4326'));
+        const count = countUnique(converted as [number, number][], this.perDevice);
+        modifiedFeatures[0].set('label', count);
+      }
+    });
+
     this.draw = new Draw({
       source: source,
       type: GeometryType.POLYGON,
     });
     this.map.addInteraction(this.draw);
+
     this.snap = new Snap({ source: source });
     this.map.addInteraction(this.snap);
 
     this.drawLayer.getSource().on('addfeature', ft => {
-      //@ts-ignore
-      const coordinates: [number, number][][] = ft.feature.getGeometry().getCoordinates();
+      const drawFeature = ft.feature.getGeometry() as Polygon;
 
       if (this.perDevice) {
-        const converted = coordinates[0].map(elm => {
-          return transform(elm, 'EPSG:3857', 'EPSG:4326');
-        });
+        const converted = drawFeature.getCoordinates()[0].map(elm => transform(elm, 'EPSG:3857', 'EPSG:4326'));
         const count = countUnique(converted as [number, number][], this.perDevice);
         ft.feature.set('label', count);
       }
@@ -136,7 +168,7 @@ export class MainPanel extends PureComponent<Props, State> {
 
     this.select = new Select({ condition: click });
     this.map.addInteraction(this.select);
-    this.select.on('select', (e: SelectEvent) => {
+    this.select.on('select', e => {
       const selectedFeature = e.target.getFeatures().item(0);
       if (selectedFeature) {
         const name = selectedFeature.get('name') || '';
@@ -254,11 +286,13 @@ export class MainPanel extends PureComponent<Props, State> {
     if (this.state.isDrawing) {
       this.setState({ isDrawing: false });
       this.draw.setActive(false);
+      this.modify.setActive(false);
       this.snap.setActive(false);
       this.select.setActive(true);
     } else {
       this.setState({ isDrawing: true });
       this.draw.setActive(true);
+      this.modify.setActive(true);
       this.snap.setActive(true);
       this.select.setActive(false);
     }
@@ -307,7 +341,7 @@ export class MainPanel extends PureComponent<Props, State> {
           {isDrawing && (
             <>
               <button className="btn btn-primary" style={{ marginLeft: '0.5em' }} onClick={this.clearDrawLayer}>
-                Clear Draw
+                Clear
               </button>
               <button className="btn btn-primary" style={{ marginLeft: '0.5em' }} onClick={this.handleUndo}>
                 Undo
