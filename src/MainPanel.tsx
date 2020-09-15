@@ -118,7 +118,7 @@ export class MainPanel extends PureComponent<Props, State> {
     let modifiedFeatures: Feature[] = [];
     let geometryChangeListener: EventsKey | null;
 
-    this.modify = new Modify({ source: source });
+    this.modify = new Modify({ source: source, pixelTolerance: 5 });
     this.map.addInteraction(this.modify);
 
     this.modify.on('modifystart', e => {
