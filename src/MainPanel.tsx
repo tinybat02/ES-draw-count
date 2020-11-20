@@ -16,6 +16,7 @@ import { nanoid } from 'nanoid';
 import { processDataES, countUnique, convertGeoJSON } from './utils/helper';
 import { FeatureCollection, Point } from '@turf/helpers';
 import Polygon from 'ol/geom/Polygon';
+import GeoJSON from 'ol/format/GeoJSON';
 import { unByKey } from 'ol/Observable';
 import { EventsKey } from 'ol/events';
 import Icon from './img/save_icon.svg';
@@ -49,7 +50,16 @@ export class MainPanel extends PureComponent<Props, State> {
   };
 
   componentDidMount() {
-    const { tile_url, zoom_level, center_lon, center_lat, heat_radius, heat_blur, heat_opacity } = this.props.options;
+    const {
+      tile_url,
+      zoom_level,
+      center_lon,
+      center_lat,
+      heat_radius,
+      heat_blur,
+      heat_opacity,
+      geoJSON,
+    } = this.props.options;
 
     const carto = new TileLayer({
       source: new XYZ({
@@ -57,7 +67,11 @@ export class MainPanel extends PureComponent<Props, State> {
       }),
     });
 
-    const source = new VectorSource<Polygon>();
+    const source = geoJSON
+      ? new VectorSource<Polygon>({
+          features: new GeoJSON({ featureProjection: 'EPSG:3857' }).readFeatures(this.props.options.geoJSON as object),
+        })
+      : new VectorSource<Polygon>();
 
     this.drawLayer = new VectorLayer({
       source: source,
@@ -324,6 +338,15 @@ export class MainPanel extends PureComponent<Props, State> {
     }
   };
 
+  onSaveGeoJSON = () => {
+    const format = new GeoJSON({ featureProjection: 'EPSG:3857' });
+
+    this.props.onOptionsChange({
+      ...this.props.options,
+      geoJSON: format.writeFeaturesObject(this.drawLayer.getSource().getFeatures()),
+    });
+  };
+
   render() {
     const { width, height } = this.props;
     const { featureName, isDrawing } = this.state;
@@ -356,6 +379,9 @@ export class MainPanel extends PureComponent<Props, State> {
                   style={{ padding: 5, border: '1px solid #7f7f7f', borderRadius: 4 }}
                 />
               </form>
+              <button className="btn btn-primary icon-download" onClick={this.onSaveGeoJSON}>
+                Save To Panel
+              </button>
               <img src={Icon} className="icon-download" onClick={this.onDownload} />
             </>
           )}

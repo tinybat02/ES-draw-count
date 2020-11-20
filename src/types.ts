@@ -1,4 +1,5 @@
 import { DataFrame, Field, Vector } from '@grafana/data';
+import { GeoJSONFeatureCollection } from 'ol/format/GeoJSON';
 
 export interface PanelOptions {
   center_lat: number;
@@ -8,6 +9,7 @@ export interface PanelOptions {
   heat_blur: string;
   heat_radius: string;
   heat_opacity: string;
+  geoJSON: GeoJSONFeatureCollection | null;
 }
 
 export const defaults: PanelOptions = {
@@ -18,6 +20,7 @@ export const defaults: PanelOptions = {
   heat_blur: '15',
   heat_radius: '5',
   heat_opacity: '0.9',
+  geoJSON: null,
 };
 
 export interface Buffer extends Vector {
